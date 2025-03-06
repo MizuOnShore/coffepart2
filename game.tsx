@@ -7,8 +7,9 @@ import { ArrowLeft, ArrowRight, ArrowUp, Heart, Coffee } from "lucide-react"
 
 export default function CoffeeQuest() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [gameState, setGameState] = useState<"menu" | "playing" | "dialogue" | "success" | "failure">("menu")
-  const [player, setPlayer] = useState({
+  const [gameState, setGameState] = useState<"menu" | "video" | "playing" | "dialogue" | "success" | "failure">("menu")
+  const videoRef = useRef<HTMLVideoElement>(null)
+    const [player, setPlayer] = useState({
     x: 50,
     y: 300,
     width: 40,
@@ -51,8 +52,30 @@ export default function CoffeeQuest() {
       if (e.key === "ArrowLeft" || e.key === "a") setKeys((prev) => ({ ...prev, left: false }))
       if (e.key === "ArrowRight" || e.key === "d") setKeys((prev) => ({ ...prev, right: false }))
       if (e.key === "ArrowUp" || e.key === "w" || e.key === " ") setKeys((prev) => ({ ...prev, up: false }))
+        
     }
-
+    if (gameState === "video" && videoRef.current) {
+      const video = videoRef.current;
+  
+      // Attempt to play video
+      video.play().catch((error) => {
+        console.error("Video playback error:", error);
+      });
+  
+      // When the video ends, reset the game
+      const handleVideoEnd = () => {
+        setGameState("menu"); // Reset to the menu
+        startGame(); // Reset the game state
+      };
+  
+      video.addEventListener("ended", handleVideoEnd);
+  
+      // Cleanup
+      return () => {
+        video.removeEventListener("ended", handleVideoEnd);
+      };
+    }
+    
     window.addEventListener("keydown", handleKeyDown)
     window.addEventListener("keyup", handleKeyUp)
 
@@ -297,7 +320,7 @@ export default function CoffeeQuest() {
     ) {
       setGameState("dialogue")
       setDialogueStep(0)
-      setDialogueOptions(["Hi there!", "Hey, how's it going?", "Hello!"])
+      setDialogueOptions(["pwede naman", "tempting, pero g", "tinatanong pa ba yan, syempre G"])
       return
     }
 
@@ -317,13 +340,13 @@ export default function CoffeeQuest() {
   const handleDialogueOption = (option: string) => {
     if (dialogueStep === 0) {
       setDialogueStep(1)
-      setDialogueOptions(["I found this flower for you.", "Nice weather today, isn't it?", "I like your style!"])
+      setDialogueOptions(["Yes", "hmm, pag isipan ko pero g ako", "G, plates lang naman"])
     } else if (dialogueStep === 1) {
       setDialogueStep(2)
       setDialogueOptions([
-        "Would you like to grab a coffee sometime?",
-        "I know a great coffee place nearby.",
-        "I'd love to chat more over coffee.",
+        "yes",
+        "YES",
+        "YESSSS!!!!",
       ])
     } else if (dialogueStep === 2) {
       if (collectedItems.flower && collectedItems.note && collectedItems.coffee) {
@@ -404,8 +427,8 @@ export default function CoffeeQuest() {
         <Dialog open={gameState === "dialogue"} onOpenChange={() => setGameState("playing")}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Conversation</DialogTitle>
-              <DialogDescription>Choose your response carefully!</DialogDescription>
+              <DialogTitle>Tara Kape ?</DialogTitle>
+              <DialogDescription>Lapit na mag weekend</DialogDescription>
             </DialogHeader>
             <div className="flex flex-col space-y-2 mt-4">
               {dialogueOptions.map((option, index) => (
@@ -429,15 +452,37 @@ export default function CoffeeQuest() {
                 <Heart className="text-pink-500" /> Success! <Coffee />
               </DialogTitle>
               <DialogDescription className="text-lg">
-                She said yes to coffee! Your preparation paid off.
+                set na agad, kape sa weekend!!!
               </DialogDescription>
             </DialogHeader>
             <div className="mt-4 text-center">
               <p className="mb-4">
-                You collected all the items and successfully asked her out for coffee. Your thoughtfulness impressed
-                her!
+                Dahil umabot sa part, libre ko na kape sa Sat?  
               </p>
-              <Button onClick={() => setGameState("menu")}>Play Again</Button>
+              <Button
+  onClick={() => {
+    setGameState("video"); // Transition to video state
+
+    if (videoRef.current) {
+      const video = videoRef.current;
+      video.currentTime = 0; // Restart video
+      video
+        .play()
+        .then(() => console.log("Video playing"))
+        .catch((error) => console.error("Video playback error:", error));
+
+      // Start game fresh when video ends
+      video.onended = () => {
+        setGameState("menu"); // Ensure it starts from menu, not directly in-game
+        startGame(); // Reset everything and prepare for a new session
+      };
+    }
+  }}
+>
+  Play Again
+</Button>
+
+
             </div>
           </DialogContent>
         </Dialog>
@@ -453,6 +498,11 @@ export default function CoffeeQuest() {
             </div>
           </DialogContent>
         </Dialog>
+        {gameState === "video" && (
+  <video ref={videoRef} width="800" height="450" controls={false}>
+    <source src="/videoplayback.mp4" type="video/mp4" />
+  </video>
+)}
 
         {gameState === "playing" && (
           <div className="absolute top-4 right-4 bg-gray-800 p-2 rounded-lg text-white">
