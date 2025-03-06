@@ -4,12 +4,15 @@ import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ArrowLeft, ArrowRight, ArrowUp, Heart, Coffee } from "lucide-react"
+import '/app/globals.css'
 
 export default function CoffeeQuest() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [gameState, setGameState] = useState<"menu" | "video" | "playing" | "dialogue" | "success" | "failure">("menu")
   const videoRef = useRef<HTMLVideoElement>(null)
-    const [player, setPlayer] = useState({
+  const bounceSoundRef = useRef<HTMLAudioElement | null>(null)
+  const walkingSoundRef = useRef<HTMLAudioElement | null>(null)
+  const [player, setPlayer] = useState({
     x: 50,
     y: 300,
     width: 40,
@@ -38,6 +41,17 @@ export default function CoffeeQuest() {
   const [keys, setKeys] = useState({ left: false, right: false, up: false })
   const [gameTime, setGameTime] = useState(0)
 
+  useEffect(() => {
+    bounceSoundRef.current = new Audio("/bounce.mp3")
+  }, [])
+  useEffect(() => {
+    return () => {
+      if (walkingSoundRef.current) {
+        walkingSoundRef.current.pause();
+        walkingSoundRef.current.currentTime = 0;
+      }
+    };
+  }, []);
   // Game initialization
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -52,30 +66,25 @@ export default function CoffeeQuest() {
       if (e.key === "ArrowLeft" || e.key === "a") setKeys((prev) => ({ ...prev, left: false }))
       if (e.key === "ArrowRight" || e.key === "d") setKeys((prev) => ({ ...prev, right: false }))
       if (e.key === "ArrowUp" || e.key === "w" || e.key === " ") setKeys((prev) => ({ ...prev, up: false }))
-        
     }
+
     if (gameState === "video" && videoRef.current) {
-      const video = videoRef.current;
-  
-      // Attempt to play video
+      const video = videoRef.current
       video.play().catch((error) => {
-        console.error("Video playback error:", error);
-      });
-  
-      // When the video ends, reset the game
+        console.error("Video playback error:", error)
+      })
+
       const handleVideoEnd = () => {
-        setGameState("menu"); // Reset to the menu
-        startGame(); // Reset the game state
-      };
-  
-      video.addEventListener("ended", handleVideoEnd);
-  
-      // Cleanup
+        setGameState("menu")
+        startGame()
+      }
+
+      video.addEventListener("ended", handleVideoEnd)
       return () => {
-        video.removeEventListener("ended", handleVideoEnd);
-      };
+        video.removeEventListener("ended", handleVideoEnd)
+      }
     }
-    
+
     window.addEventListener("keydown", handleKeyDown)
     window.addEventListener("keyup", handleKeyUp)
 
@@ -113,45 +122,40 @@ export default function CoffeeQuest() {
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     // Draw platforms
-    ctx.fillStyle = "#8B4513"
     platforms.forEach((platform) => {
+      ctx.fillStyle = "#8B4513" // Brown platform
       ctx.fillRect(platform.x, platform.y, platform.width, platform.height)
+
       // Add grass on top
-      ctx.fillStyle = "#7CFC00"
+      ctx.fillStyle = "#7CFC00" // Green grass
       ctx.fillRect(platform.x, platform.y - 5, platform.width, 5)
-      ctx.fillStyle = "#8B4513"
     })
 
     // Draw items
     items.forEach((item) => {
       if (item.collected) return
 
-      ctx.fillStyle = "#FFFF00"
-
       if (item.id === "flower") {
-        // Draw flower
-        ctx.fillStyle = "#FF69B4"
+        ctx.fillStyle = "#FF69B4" // Pink flower
         ctx.beginPath()
         ctx.arc(item.x + 15, item.y + 10, 10, 0, Math.PI * 2)
         ctx.fill()
-        ctx.fillStyle = "#32CD32"
+        ctx.fillStyle = "#32CD32" // Green stem
         ctx.fillRect(item.x + 13, item.y + 20, 4, 10)
       } else if (item.id === "note") {
-        // Draw note
-        ctx.fillStyle = "#FFFFFF"
+        ctx.fillStyle = "#FFFFFF" // White note
         ctx.fillRect(item.x, item.y, item.width, item.height)
-        ctx.fillStyle = "#000000"
+        ctx.fillStyle = "#000000" // Black lines
         ctx.fillRect(item.x + 5, item.y + 5, item.width - 10, 2)
         ctx.fillRect(item.x + 5, item.y + 10, item.width - 10, 2)
         ctx.fillRect(item.x + 5, item.y + 15, item.width - 10, 2)
         ctx.fillRect(item.x + 5, item.y + 20, item.width - 15, 2)
       } else if (item.id === "coffee") {
-        // Draw coffee
-        ctx.fillStyle = "#8B4513"
+        ctx.fillStyle = "#8B4513" // Brown coffee
         ctx.fillRect(item.x, item.y + 10, item.width, item.height - 10)
-        ctx.fillStyle = "#D2B48C"
+        ctx.fillStyle = "#D2B48C" // Light brown lid
         ctx.fillRect(item.x + 5, item.y, item.width - 10, 10)
-        ctx.fillStyle = "#FFFFFF"
+        ctx.fillStyle = "#FFFFFF" // White steam
         ctx.beginPath()
         ctx.arc(item.x + 15, item.y + 5, 3, 0, Math.PI * 2)
         ctx.fill()
@@ -159,79 +163,99 @@ export default function CoffeeQuest() {
     })
 
     // Draw girl
-    ctx.fillStyle = "#FF69B4"
+    ctx.fillStyle = "#FF69B4" // Pink dress
     ctx.fillRect(girl.x, girl.y, girl.width, girl.height)
-    // Draw girl's face
-    ctx.fillStyle = "#FFC0CB"
+    ctx.fillStyle = "#FFC0CB" // Light pink face
     ctx.fillRect(girl.x + 5, girl.y + 5, girl.width - 10, 20)
-    ctx.fillStyle = "#000000"
-    ctx.fillRect(girl.x + 10, girl.y + 10, 5, 5) // eye
-    ctx.fillRect(girl.x + 25, girl.y + 10, 5, 5) // eye
-    ctx.fillStyle = "#FF0000"
-    ctx.fillRect(girl.x + 15, girl.y + 20, 10, 3) // mouth
+    ctx.fillStyle = "#000000" // Black eyes
+    ctx.fillRect(girl.x + 10, girl.y + 10, 5, 5)
+    ctx.fillRect(girl.x + 25, girl.y + 10, 5, 5)
+    ctx.fillStyle = "#FF0000" // Red mouth
+    ctx.fillRect(girl.x + 15, girl.y + 20, 10, 3)
 
     // Draw player
-    ctx.fillStyle = "#4169E1"
+    ctx.fillStyle = "#4169E1" // Blue body
     ctx.fillRect(player.x, player.y, player.width, player.height)
-    // Draw player's face
-    ctx.fillStyle = "#FFE4C4"
+    ctx.fillStyle = "#FFE4C4" // Light skin face
     ctx.fillRect(player.x + 5, player.y + 5, player.width - 10, 20)
-    ctx.fillStyle = "#000000"
-
-    // Draw eyes based on direction
+    ctx.fillStyle = "#000000" // Black eyes
     if (player.direction === "right") {
-      ctx.fillRect(player.x + 10, player.y + 10, 5, 5) // left eye
-      ctx.fillRect(player.x + 25, player.y + 10, 5, 5) // right eye
+      ctx.fillRect(player.x + 10, player.y + 10, 5, 5)
+      ctx.fillRect(player.x + 25, player.y + 10, 5, 5)
     } else {
-      ctx.fillRect(player.x + 5, player.y + 10, 5, 5) // left eye
-      ctx.fillRect(player.x + 20, player.y + 10, 5, 5) // right eye
+      ctx.fillRect(player.x + 5, player.y + 10, 5, 5)
+      ctx.fillRect(player.x + 20, player.y + 10, 5, 5)
     }
+    ctx.fillStyle = "#FF0000" // Red mouth
+    ctx.fillRect(player.x + 15, player.y + 20, 10, 3)
 
-    ctx.fillStyle = "#FF0000"
-    ctx.fillRect(player.x + 15, player.y + 20, 10, 3) // mouth
+    // In your canvas rendering logic
+ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; // Semi-transparent black background
+ctx.fillRect(10, 10, 200, 50); // Increase width to accommodate spacing
 
-    // Draw inventory
-    ctx.fillStyle = "rgba(0, 0, 0, 0.5)"
-    ctx.fillRect(10, 10, 150, 40)
-    ctx.fillStyle = "#FFFFFF"
-    ctx.font = "16px Arial"
-    ctx.fillText("Inventory:", 20, 30)
+ctx.fillStyle = "#FFFFFF"; // White text
+ctx.font = "16px 'Press Start 2P', cursive"; // Pixelated font
+ctx.fillText("Inventory:", 20, 30);
 
-    if (collectedItems.flower) {
-      ctx.fillStyle = "#FF69B4"
-      ctx.beginPath()
-      ctx.arc(80, 25, 10, 0, Math.PI * 2)
-      ctx.fill()
-    }
+// Draw collected items with proper spacing
+if (collectedItems.flower) {
+  ctx.fillStyle = "#FF69B4"; // Pink flower
+  ctx.beginPath();
+  ctx.arc(110, 25, 10, 0, Math.PI * 2); // Adjusted x position
+  ctx.fill();
+}
 
-    if (collectedItems.note) {
-      ctx.fillStyle = "#FFFFFF"
-      ctx.fillRect(100, 15, 20, 20)
-    }
+if (collectedItems.note) {
+  ctx.fillStyle = "#FFFFFF"; // White note
+  ctx.fillRect(130, 15, 20, 20); // Adjusted x position
+}
 
-    if (collectedItems.coffee) {
-      ctx.fillStyle = "#8B4513"
-      ctx.fillRect(130, 15, 20, 20)
-    }
+if (collectedItems.coffee) {
+  ctx.fillStyle = "#8B4513"; // Brown coffee
+  ctx.fillRect(160, 15, 20, 20); // Adjusted x position
+}
   }, [gameState, player, items, platforms, girl, collectedItems, gameTime])
 
+
   const updateGame = () => {
-    // Update player position based on keys
-    let newVelocityX = 0
-    if (keys.left) newVelocityX = -5
-    if (keys.right) newVelocityX = 5
+    let newVelocityX = 0;
+
+    // Handle movement
+    if (keys.left) newVelocityX = -5;
+    if (keys.right) newVelocityX = 5;
+
+    // Play walking sound if moving
+    if ((keys.left || keys.right) && !player.isJumping) {
+      if (walkingSoundRef.current && walkingSoundRef.current.paused) {
+        walkingSoundRef.current.loop = true; // Loop the sound
+        walkingSoundRef.current.play();
+      }
+    } else {
+      // Stop walking sound if not moving
+      if (walkingSoundRef.current) {
+        walkingSoundRef.current.pause();
+        walkingSoundRef.current.currentTime = 0; // Reset sound to start
+      }
+    }
 
     // Handle jumping
-    let newVelocityY = player.velocityY
-    let isJumping = player.isJumping
+    let newVelocityY = player.velocityY;
+    let isJumping = player.isJumping;
 
     if (keys.up && !player.isJumping) {
-      newVelocityY = -15
-      isJumping = true
+      newVelocityY = -15;
+      isJumping = true;
+
+      // Play the bounce sound
+      if (bounceSoundRef.current) {
+        bounceSoundRef.current.currentTime = 0;
+        bounceSoundRef.current.play();
+      }
     }
 
     // Apply gravity
-    newVelocityY += 0.8
+    newVelocityY += 0.8;
+    
 
     // Calculate new position
     let newX = player.x + newVelocityX
@@ -407,85 +431,83 @@ export default function CoffeeQuest() {
               </div>
             </div>
             <Button
-              onClick={startGame}
-              className="px-8 py-4 text-xl bg-pink-600 hover:bg-pink-700 text-white rounded-lg"
-            >
-              Start Game
-            </Button>
+  onClick={startGame}
+  className="retro-button pixel-font"
+>
+  Start Game
+</Button>
           </div>
         )}
 
         {gameState === "playing" && (
           <canvas
-            ref={canvasRef}
-            width={800}
-            height={400}
-            className="border-4 border-gray-700 rounded-lg shadow-lg bg-blue-200"
-          />
+          ref={canvasRef}
+          width={800}
+          height={400}
+          className="retro-canvas pixel-font"
+        />
         )}
 
-        <Dialog open={gameState === "dialogue"} onOpenChange={() => setGameState("playing")}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Tara Kape ?</DialogTitle>
-              <DialogDescription>Lapit na mag weekend</DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col space-y-2 mt-4">
-              {dialogueOptions.map((option, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  onClick={() => handleDialogueOption(option)}
-                  className="justify-start text-left"
-                >
-                  {option}
-                </Button>
-              ))}
-            </div>
-          </DialogContent>
-        </Dialog>
+<Dialog open={gameState === "dialogue"} onOpenChange={() => setGameState("playing")}>
+  <DialogContent className="sm:max-w-md bg-gray-800 border-4 border-gray-700 rounded-lg pixel-font">
+    <DialogHeader>
+      <DialogTitle className="text-2xl text-yellow-400">Tara Kape?</DialogTitle>
+      <DialogDescription className="text-gray-300">
+        Lapit na mag weekend!
+      </DialogDescription>
+    </DialogHeader>
+    <div className="flex flex-col space-y-2 mt-4">
+      {dialogueOptions.map((option, index) => (
+        <Button
+          key={index}
+          variant="outline"
+          onClick={() => handleDialogueOption(option)}
+          className="justify-start text-left bg-gray-700 text-white border-2 border-gray-600 hover:bg-gray-600 hover:text-yellow-400 pixel-font"
+        >
+          {option}
+        </Button>
+      ))}
+    </div>
+  </DialogContent>
+</Dialog>
 
-        <Dialog open={gameState === "success"} onOpenChange={() => setGameState("menu")}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-2xl text-green-500 flex items-center gap-2">
-                <Heart className="text-pink-500" /> Success! <Coffee />
-              </DialogTitle>
-              <DialogDescription className="text-lg">
-                set na agad, kape sa weekend!!!
-              </DialogDescription>
-            </DialogHeader>
-            <div className="mt-4 text-center">
-              <p className="mb-4">
-                Dahil umabot sa part, libre ko na kape sa Sat?  
-              </p>
-              <Button
-  onClick={() => {
-    setGameState("video"); // Transition to video state
-
-    if (videoRef.current) {
-      const video = videoRef.current;
-      video.currentTime = 0; // Restart video
-      video
-        .play()
-        .then(() => console.log("Video playing"))
-        .catch((error) => console.error("Video playback error:", error));
-
-      // Start game fresh when video ends
-      video.onended = () => {
-        setGameState("menu"); // Ensure it starts from menu, not directly in-game
-        startGame(); // Reset everything and prepare for a new session
-      };
-    }
-  }}
->
-  Play Again
-</Button>
-
-
-            </div>
-          </DialogContent>
-        </Dialog>
+<Dialog open={gameState === "success"} onOpenChange={() => setGameState("menu")}>
+  <DialogContent className="sm:max-w-md bg-gray-800 border-4 border-gray-700 rounded-lg pixel-font">
+    <DialogHeader>
+      <DialogTitle className="text-2xl text-green-500 flex items-center gap-2">
+        <span className="text-yellow-400"></span> Success! <span className="text-pink-500"></span>
+      </DialogTitle>
+      <DialogDescription className="text-lg text-gray-300">
+        Set na agad, kape sa weekend!!!
+      </DialogDescription>
+    </DialogHeader>
+    <div className="mt-4 text-center">
+      <p className="mb-4 text-gray-300">
+        para mas tempting libre ko na kape sa Sat?  
+      </p>
+      <Button
+        onClick={() => {
+          setGameState("video"); // Transition to video state
+          if (videoRef.current) {
+            const video = videoRef.current;
+            video.currentTime = 0; // Restart video
+            video
+              .play()
+              .then(() => console.log("Video playing"))
+              .catch((error) => console.error("Video playback error:", error));
+            video.onended = () => {
+              setGameState("menu"); // Ensure it starts from menu, not directly in-game
+              startGame(); // Reset everything and prepare for a new session
+            };
+          }
+        }}
+        className="retro-button"
+      >
+        Play Again
+      </Button>
+    </div>
+  </DialogContent>
+</Dialog>
 
         <Dialog open={gameState === "failure"} onOpenChange={() => setGameState("menu")}>
           <DialogContent className="sm:max-w-md">
