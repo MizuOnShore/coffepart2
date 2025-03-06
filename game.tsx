@@ -390,7 +390,7 @@ export default function CoffeeQuest() {
           <div className="bg-gray-800 p-8 rounded-lg shadow-lg text-center">
             <h1 className="text-4xl font-bold mb-6 text-white">Coffee Quest</h1>
             <p className="text-xl mb-8 text-gray-300">
-              Collect the flower, note, and coffee before asking the girl out!
+              Collect the flower, note, and coffee!!!
             </p>
             <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-gray-700 p-4 rounded-lg">
